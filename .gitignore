@@ -48,3 +48,6 @@ buildNumber.properties
 .env
 agilexpert_db*
 .metals/
+# Project specific documents
+*.md
+!README.md
