@@ -1,0 +1,62 @@
+# AgileXpert OS Simulator
+
+AgileXpert OS Simulator is a Java-based simulation of an operating system designed for smart devices. The project demonstrates a client-server architecture where data storage and complex computations (including AI) are handled in the "cloud" (database and LLM).
+
+## Key Features
+- **Multi-user Management**: Individual user profiles with their own apps and settings.
+- **Dynamic Menu System**: Customizable main menu and submenus.
+- **Personalization**: Selectable themes, wallpapers, and icons.
+- **AI Assistant**: Natural language command execution (via OpenAI / LangChain4j).
+- **System Simulation**: Automated test data generation using Artificial Intelligence.
+
+---
+
+## Prerequisites
+To run this project, you will need:
+- **Java 17** or higher
+- **Maven 3.6** or higher
+- (Optional) **OpenAI API Key** for AI features
+
+---
+
+## Installation and Execution
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/tikawarder/agileExpert.git
+cd agileExpert
+```
+
+### 2. Build and Package
+The project uses Maven to compile and package everything into a single executable JAR file:
+```bash
+mvn clean package
+```
+
+### 3. Run the Application
+After a successful build, you can start the application with the following command:
+```bash
+java -jar target/agilexpert-os-simulator-1.0-SNAPSHOT.jar
+```
+
+---
+
+## Setting up AI Features (Optional)
+To use the AI Assistant and Simulation data generator, an OpenAI API key is required.
+1. Create a `.env` file in the project root directory.
+2. Add your key:
+   ```text
+   OPENAI_API_KEY=your_actual_api_key_here
+   ```
+
+---
+
+## Developer Mode
+If you are modifying the code and want to see results quickly without re-packaging, use the developer execution mode:
+```bash
+mvn compile exec:java
+```
+
+---
+**Author**: Tamás Biró (tikawarder@gmail.com)
+**Technologies**: Java 17, JPA/Hibernate, H2 Database, LangChain4j, Maven.
