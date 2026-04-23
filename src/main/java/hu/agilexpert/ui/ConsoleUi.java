@@ -65,14 +65,14 @@ public class ConsoleUi {
         System.out.println("7. Set Background Image");
         System.out.println("8. Manage Icons");
         System.out.println("9. Install App from Store");
-        System.out.println("10. AI Asszisztens (Természetes nyelvű vezérlés)");
-        System.out.println("11. Rendszer Szimuláció futtatása (LLM adatgenerálás)");
+        System.out.println("10. AI Assistant (Natural Language Control)");
+        System.out.println("11. Run System Simulation (LLM Data Generation)");
         System.out.println("0. Exit");
         System.out.print("Choose an option: ");
     }
 
     private void populateInitialData() {
-        UserAccount initialUser = userService.findUserByName("Biró Tamás");
+        UserAccount initialUser = userService.findUserByName("Tamas Biro");
         if (initialUser != null) {
             currentUser = initialUser;
             System.out.println("Persistent data found. Loaded user: " + currentUser.getName());
@@ -82,13 +82,13 @@ public class ConsoleUi {
         System.out.println("No existing data found. Creating default setup...");
         DbService.getInstance().inTransaction(em -> {
             Icon defaultIcon = new Icon("Default App Icon");
-            App app1 = new App("Aknakereső", defaultIcon);
+            App app1 = new App("Minesweeper", defaultIcon);
             App app2 = new App("OpenMap", defaultIcon);
             App app3 = new App("Paint", defaultIcon);
-            App app4 = new App("Címtár", defaultIcon);
+            App app4 = new App("Directory", defaultIcon);
             
-            Theme defaultTheme = new Theme("Világos Arculat");
-            BackgroundImage defaultBgm = new BackgroundImage("Kék Hegyek");
+            Theme defaultTheme = new Theme("Light Theme");
+            BackgroundImage defaultBgm = new BackgroundImage("Blue Mountains");
             
             em.persist(defaultIcon);
             em.persist(app1);
@@ -98,15 +98,15 @@ public class ConsoleUi {
             em.persist(defaultTheme);
             em.persist(defaultBgm);
 
-            UserAccount user = new UserAccount("Biró Tamás");
+            UserAccount user = new UserAccount("Tamas Biro");
             user.setTheme(defaultTheme);
             user.setBackgroundImage(defaultBgm);
 
-            Menu myMenu = new Menu("Biró Tamás Főmenüje");
-            myMenu.getItems().add(new MenuItem("Játék: Aknakereső", app1));
-            myMenu.getItems().add(new MenuItem("Navigáció: OpenMap", app2));
-            myMenu.getItems().add(new MenuItem("Rajzolás: Paint", app3));
-            myMenu.getItems().add(new MenuItem("Kapcsolatok: Címtár", app4));
+            Menu myMenu = new Menu("Tamas Biro's Main Menu");
+            myMenu.getItems().add(new MenuItem("Game: Minesweeper", app1));
+            myMenu.getItems().add(new MenuItem("Navigation: OpenMap", app2));
+            myMenu.getItems().add(new MenuItem("Drawing: Paint", app3));
+            myMenu.getItems().add(new MenuItem("Contacts: Directory", app4));
 
             user.setDeviceMenu(myMenu);
             em.persist(user);
@@ -227,13 +227,13 @@ public class ConsoleUi {
 
     private void executeAiCommand() {
         if (currentUser == null) return;
-        System.out.print("Utasítás: ");
+        System.out.print("Command: ");
         String request = scanner.nextLine();
         
         StringBuilder appsStr = new StringBuilder();
         currentUser.getInstalledApps().forEach(a -> appsStr.append(a.getName()).append(", "));
 
-        String systemMsg = "Te egy OS szimulátor asszisztense vagy. Válaszolj JSON-ban: { 'action': 'START_APP'/'CHANGE_THEME'/'UNKNOWN', 'target': '...' }\n" +
+        String systemMsg = "You are an OS simulator assistant. Respond in JSON: { 'action': 'START_APP'/'CHANGE_THEME'/'UNKNOWN', 'target': '...' }\n" +
                 "Apps: [" + appsStr + "]\nTheme: " + (currentUser.getTheme() != null ? currentUser.getTheme().getName() : "None");
 
         JsonNode resp = aiService.executePrompt(systemMsg, request);
@@ -241,10 +241,10 @@ public class ConsoleUi {
             String act = resp.get("action").asText();
             String trg = resp.get("target").asText();
             if ("START_APP".equals(act)) {
-                System.out.println("[AI] Indítás: " + trg);
+                System.out.println("[AI] Starting: " + trg);
             } else if ("CHANGE_THEME".equals(act)) {
                 osService.setTheme(currentUser, trg);
-                System.out.println("[AI] Téma átállítva: " + trg);
+                System.out.println("[AI] Theme changed to: " + trg);
             }
         }
     }

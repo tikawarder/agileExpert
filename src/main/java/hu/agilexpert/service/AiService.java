@@ -33,7 +33,7 @@ public class AiService {
         }
 
         if (apiKey == null || apiKey.isBlank()) {
-            System.err.println("[FIGYELMEZTETÉS] Nincs beállítva az OPENAI_API_KEY! Az AI funkciók nem fognak működni.");
+            System.err.println("[WARNING] OPENAI_API_KEY is not set! AI features will not work.");
         } else {
             try {
                 this.chatModel = OpenAiChatModel.builder()
@@ -42,7 +42,7 @@ public class AiService {
                     .temperature(0.3) // Lower temperature for more deterministic JSON outputs
                     .build();
             } catch (Exception e) {
-                System.err.println("Hiba az AI modell inicializálásakor: " + e.getMessage());
+                System.err.println("Error initializing AI model: " + e.getMessage());
             }
         }
     }
@@ -53,7 +53,7 @@ public class AiService {
             return null;
         }
         try {
-            String prompt = systemMessage + "\n\nUtasítás: " + userMessage;
+            String prompt = systemMessage + "\n\nInstruction: " + userMessage;
             String response = chatModel.generate(prompt);
             
             // Clean markdown blocks if the model wrapped it in ```json ... ```
@@ -69,21 +69,21 @@ public class AiService {
             
             return objectMapper.readTree(response.trim());
         } catch (Exception e) {
-            System.err.println("Hiba az AI hívás vagy feldolgozás közben: " + e.getMessage());
+            System.err.println("Error during AI call or processing: " + e.getMessage());
             return null;
         }
     }
 
     public void runSimulation() {
-        System.out.println("LLM Szimulációs adatok generálása folyamatban (ez eltarthat egy ideig)...");
-        String systemMsg = "Generálj 3 új felhasználót, mindegyikhez 2 egyedi alkalmazást (névvel és ikon névvel), és 1 egyedi témát.\n" +
-            "A kimenet Szigorúan csak egy valid JSON legyen, markdown kódblokk (```json) NÉLKÜL!\n" +
-            "Formátum:\n" +
+        System.out.println("Generating LLM simulation data (this may take a while)...");
+        String systemMsg = "Generate 3 new users, each with 2 unique applications (with name and icon name), and 1 unique theme.\n" +
+            "The output must be STRICTLY valid JSON, WITHOUT markdown code blocks (```json)!\n" +
+            "Format:\n" +
             "{\n" +
             "  \"users\": [\n" +
             "    {\n" +
-            "      \"name\": \"Nev1\",\n" +
-            "      \"theme\": \"Tema1\",\n" +
+            "      \"name\": \"Name1\",\n" +
+            "      \"theme\": \"Theme1\",\n" +
             "      \"apps\": [\n" +
             "        { \"name\": \"App1\", \"icon\": \"Icon1\" },\n" +
             "        { \"name\": \"App2\", \"icon\": \"Icon2\" }\n" +
@@ -92,7 +92,7 @@ public class AiService {
             "  ]\n" +
             "}";
         
-        JsonNode response = executePrompt(systemMsg, "Kérlek generáld le a szimulációs adatokat.");
+        JsonNode response = executePrompt(systemMsg, "Please generate simulation data.");
         
         if (response != null && response.has("users")) {
             dbService.inTransaction(em -> {
@@ -129,10 +129,10 @@ public class AiService {
                     em.persist(u);
                     userCount++;
                 }
-                System.out.println("=> Sikeresen generálva és mentve " + userCount + " felhasználó és " + appCount + " alkalmazás!");
+                System.out.println("=> Successfully generated and saved " + userCount + " users and " + appCount + " applications!");
             });
         } else {
-            System.out.println("Hiba történt a generálás során. Az LLM nem érvényes JSON-t adott vissza.");
+            System.out.println("An error occurred during generation. The LLM did not return a valid JSON.");
         }
     }
 }
