@@ -20,6 +20,7 @@ public class AiService {
 
     public AiService() {
         this.objectMapper = new ObjectMapper();
+        this.objectMapper.configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
         this.dbService = DbService.getInstance();
         
         // Load API key from .env file

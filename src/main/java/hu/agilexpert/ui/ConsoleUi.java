@@ -233,19 +233,27 @@ public class ConsoleUi {
         StringBuilder appsStr = new StringBuilder();
         currentUser.getInstalledApps().forEach(a -> appsStr.append(a.getName()).append(", "));
 
-        String systemMsg = "You are an OS simulator assistant. Respond in JSON: { 'action': 'START_APP'/'CHANGE_THEME'/'UNKNOWN', 'target': '...' }\n" +
-                "Apps: [" + appsStr + "]\nTheme: " + (currentUser.getTheme() != null ? currentUser.getTheme().getName() : "None");
+        String systemMsg = "You are an OS simulator assistant. Respond STRICTLY in valid JSON with DOUBLE QUOTES: { \"action\": \"START_APP\"/\"CHANGE_THEME\"/\"CREATE_USER\"/\"UNKNOWN\", \"target\": \"...\" }\n" +
+                "Apps: [" + appsStr + "]\nTheme: " + (currentUser.getTheme() != null ? currentUser.getTheme().getName() : "None") + "\n" +
+                "For CREATE_USER, 'target' should be the name of the new user.";
 
         JsonNode resp = aiService.executePrompt(systemMsg, request);
         if (resp != null && resp.has("action")) {
             String act = resp.get("action").asText();
             String trg = resp.get("target").asText();
             if ("START_APP".equals(act)) {
-                System.out.println("[AI] Starting: " + trg);
+                System.out.println("[AI] Starting application: " + trg);
             } else if ("CHANGE_THEME".equals(act)) {
                 osService.setTheme(currentUser, trg);
                 System.out.println("[AI] Theme changed to: " + trg);
+            } else if ("CREATE_USER".equals(act)) {
+                UserAccount newUser = userService.createUser(trg);
+                System.out.println("[AI] Created new user: " + newUser.getName());
+            } else {
+                System.out.println("[AI] I'm sorry, I don't know how to perform this action yet: " + request);
             }
+        } else {
+            System.out.println("[AI] I couldn't understand that command. Please try something like 'Start Minesweeper' or 'Create user Ivan'.");
         }
     }
 }
