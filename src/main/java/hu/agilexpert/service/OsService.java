@@ -1,10 +1,12 @@
 package hu.agilexpert.service;
 
 import hu.agilexpert.model.*;
-import jakarta.persistence.EntityManager;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OsService {
+    private static final Logger logger = LoggerFactory.getLogger(OsService.class);
     private final DbService dbService;
 
     public OsService() {
@@ -18,6 +20,7 @@ public class OsService {
             user.setTheme(t);
             em.merge(user);
         });
+        logger.info("Theme set to '{}' for user '{}'", themeName, user.getName());
     }
 
     public void setBackground(UserAccount user, String bgName) {
@@ -27,6 +30,7 @@ public class OsService {
             user.setBackgroundImage(b);
             em.merge(user);
         });
+        logger.info("Background set to '{}' for user '{}'", bgName, user.getName());
     }
 
     public List<App> getAllApps() {
@@ -47,6 +51,7 @@ public class OsService {
                 user.getInstalledApps().add(app);
                 em.merge(user);
             });
+            logger.info("App '{}' installed for user '{}'", app.getName(), user.getName());
         }
     }
 

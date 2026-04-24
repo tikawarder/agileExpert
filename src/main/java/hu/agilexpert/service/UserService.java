@@ -2,10 +2,12 @@ package hu.agilexpert.service;
 
 import hu.agilexpert.model.Menu;
 import hu.agilexpert.model.UserAccount;
-import jakarta.persistence.EntityManager;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserService {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final DbService dbService;
 
     public UserService() {
@@ -18,6 +20,7 @@ public class UserService {
         newUser.setDeviceMenu(menu);
         
         dbService.inTransaction(em -> em.persist(newUser));
+        logger.info("Created new user: {}", name);
         return newUser;
     }
 

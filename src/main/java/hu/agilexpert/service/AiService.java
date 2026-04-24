@@ -11,9 +11,12 @@ import hu.agilexpert.model.Icon;
 import hu.agilexpert.model.Menu;
 import hu.agilexpert.model.Theme;
 import hu.agilexpert.model.UserAccount;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AiService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AiService.class);
     private ChatLanguageModel chatModel;
     private ObjectMapper objectMapper;
     private DbService dbService;
@@ -34,7 +37,7 @@ public class AiService {
         }
 
         if (apiKey == null || apiKey.isBlank()) {
-            System.err.println("[WARNING] OPENAI_API_KEY is not set! AI features will not work.");
+            logger.warn("OPENAI_API_KEY is not set! AI features will not work.");
         } else {
             try {
                 this.chatModel = OpenAiChatModel.builder()
@@ -43,14 +46,14 @@ public class AiService {
                     .temperature(0.3) // Lower temperature for more deterministic JSON outputs
                     .build();
             } catch (Exception e) {
-                System.err.println("Error initializing AI model: " + e.getMessage());
+                logger.error("Error initializing AI model: {}", e.getMessage());
             }
         }
     }
 
     public JsonNode executePrompt(String systemMessage, String userMessage) {
         if (chatModel == null) {
-            System.err.println("AI Model is not initialized.");
+            logger.error("AI Model is not initialized.");
             return null;
         }
         try {
@@ -70,7 +73,7 @@ public class AiService {
             
             return objectMapper.readTree(response.trim());
         } catch (Exception e) {
-            System.err.println("Error during AI call or processing: " + e.getMessage());
+            logger.error("Error during AI call or processing: {}", e.getMessage());
             return null;
         }
     }
