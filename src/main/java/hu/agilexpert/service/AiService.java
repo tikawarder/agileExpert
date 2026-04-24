@@ -11,6 +11,8 @@ import hu.agilexpert.model.Icon;
 import hu.agilexpert.model.Menu;
 import hu.agilexpert.model.Theme;
 import hu.agilexpert.model.UserAccount;
+import hu.agilexpert.exception.AiServiceException;
+import hu.agilexpert.dto.SimulationDataDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,10 +55,10 @@ public class AiService {
 
     public JsonNode executePrompt(String systemMessage, String userMessage) {
         if (chatModel == null) {
-            logger.error("AI Model is not initialized.");
-            return null;
+            throw new AiServiceException("AI Model is not initialized. Check your API key.");
         }
         try {
+            logger.debug("Executing AI prompt. System: {}, User: {}", systemMessage, userMessage);
             String prompt = systemMessage + "\n\nInstruction: " + userMessage;
             String response = chatModel.generate(prompt);
             
@@ -74,69 +76,18 @@ public class AiService {
             return objectMapper.readTree(response.trim());
         } catch (Exception e) {
             logger.error("Error during AI call or processing: {}", e.getMessage());
-            return null;
+            throw new AiServiceException("Failed to process AI command", e);
         }
     }
 
-    public void runSimulation() {
-        System.out.println("Generating LLM simulation data (this may take a while)...");
-        String systemMsg = "Generate 3 new users, each with 2 unique applications (with name and icon name), and 1 unique theme.\n" +
-            "The output must be STRICTLY valid JSON, WITHOUT markdown code blocks (```json)!\n" +
-            "Format:\n" +
-            "{\n" +
-            "  \"users\": [\n" +
-            "    {\n" +
-            "      \"name\": \"Name1\",\n" +
-            "      \"theme\": \"Theme1\",\n" +
-            "      \"apps\": [\n" +
-            "        { \"name\": \"App1\", \"icon\": \"Icon1\" },\n" +
-            "        { \"name\": \"App2\", \"icon\": \"Icon2\" }\n" +
-            "      ]\n" +
-            "    }\n" +
-            "  ]\n" +
-            "}";
-        
-        JsonNode response = executePrompt(systemMsg, "Please generate simulation data.");
-        
-        if (response != null && response.has("users")) {
-            dbService.inTransaction(em -> {
-                int userCount = 0;
-                int appCount = 0;
-
-                for (JsonNode userNode : response.get("users")) {
-                    String uName = userNode.get("name").asText();
-                    String tName = userNode.get("theme").asText();
-                    
-                    Theme theme = new Theme(tName);
-                    em.persist(theme);
-                    
-                    UserAccount u = new UserAccount(uName);
-                    u.setTheme(theme);
-                    u.setDeviceMenu(new Menu(uName + "'s Menu"));
-                    
-                    if (userNode.has("apps")) {
-                        for (JsonNode appNode : userNode.get("apps")) {
-                            String aName = appNode.get("name").asText();
-                            String iName = appNode.get("icon").asText();
-                            
-                            Icon icon = new Icon(iName);
-                            em.persist(icon);
-                            
-                            App app = new App(aName, icon);
-                            em.persist(app);
-                            
-                            u.getInstalledApps().add(app);
-                            appCount++;
-                        }
-                    }
-                    
-                    em.persist(u);
-                    userCount++;
-                }
-                System.out.println("=> Successfully generated and saved " + userCount + " users and " + appCount + " applications!");
-            });
-        } else {
-            System.out.println("An error occurred during generation. The LLM did not return a valid JSON.");
+    public <T> T executePromptForDto(String systemMessage, String userMessage, Class<T> dtoClass) {
+        JsonNode node = executePrompt(systemMessage, userMessage);
+        try {
+            return objectMapper.treeToValue(node, dtoClass);
+        } catch (Exception e) {
+            logger.error("Failed to map AI response to DTO {}: {}", dtoClass.getSimpleName(), e.getMessage());
+            throw new AiServiceException("Invalid response format from AI", e);
         }
     }
+
 }

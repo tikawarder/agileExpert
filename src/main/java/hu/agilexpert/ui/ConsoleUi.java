@@ -6,6 +6,8 @@ import hu.agilexpert.service.AiService;
 import hu.agilexpert.service.DbService;
 import hu.agilexpert.service.OsService;
 import hu.agilexpert.service.UserService;
+import hu.agilexpert.service.SimulationService;
+import hu.agilexpert.exception.AgileExpertException;
 import jakarta.persistence.EntityManager;
 
 import java.util.List;
@@ -15,6 +17,7 @@ public class ConsoleUi {
     private final UserService userService;
     private final OsService osService;
     private final AiService aiService;
+    private final SimulationService simulationService;
     private UserAccount currentUser;
     private final Scanner scanner;
 
@@ -22,6 +25,7 @@ public class ConsoleUi {
         this.userService = new UserService();
         this.osService = new OsService();
         this.aiService = new AiService();
+        this.simulationService = new SimulationService();
         this.scanner = new Scanner(System.in);
     }
 
@@ -46,7 +50,7 @@ public class ConsoleUi {
                 case "8" -> manageIcons();
                 case "9" -> installApp();
                 case "10" -> executeAiCommand();
-                case "11" -> aiService.runSimulation();
+                case "11" -> runSimulation();
                 case "0" -> running = false;
                 default -> System.out.println("Invalid option.");
             }
@@ -136,7 +140,9 @@ public class ConsoleUi {
                 currentUser = users.get(num - 1);
                 System.out.println("Selected " + currentUser.getName());
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("Error selecting user: " + e.getMessage());
+        }
     }
 
     private void showState() {
@@ -182,7 +188,9 @@ public class ConsoleUi {
                     System.out.print("Label: ");
                     osService.addAppToMenu(currentUser, apps.get(num - 1), scanner.nextLine());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.err.println("Error adding app: " + e.getMessage());
+            }
         } else if (opt.equals("2")) {
             System.out.print("Label: ");
             osService.addSubMenu(currentUser, scanner.nextLine());
@@ -222,7 +230,9 @@ public class ConsoleUi {
         try {
             int num = Integer.parseInt(scanner.nextLine());
             if (num > 0 && num <= apps.size()) osService.installApp(currentUser, apps.get(num - 1));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("Error installing app: " + e.getMessage());
+        }
     }
 
     private void executeAiCommand() {
@@ -230,30 +240,42 @@ public class ConsoleUi {
         System.out.print("Command: ");
         String request = scanner.nextLine();
         
-        StringBuilder appsStr = new StringBuilder();
-        currentUser.getInstalledApps().forEach(a -> appsStr.append(a.getName()).append(", "));
+        try {
+            StringBuilder appsStr = new StringBuilder();
+            currentUser.getInstalledApps().forEach(a -> appsStr.append(a.getName()).append(", "));
 
-        String systemMsg = "You are an OS simulator assistant. Respond STRICTLY in valid JSON with DOUBLE QUOTES: { \"action\": \"START_APP\"/\"CHANGE_THEME\"/\"CREATE_USER\"/\"UNKNOWN\", \"target\": \"...\" }\n" +
-                "Apps: [" + appsStr + "]\nTheme: " + (currentUser.getTheme() != null ? currentUser.getTheme().getName() : "None") + "\n" +
-                "For CREATE_USER, 'target' should be the name of the new user.";
+            String systemMsg = "You are an OS simulator assistant. Respond STRICTLY in valid JSON with DOUBLE QUOTES: { \"action\": \"START_APP\"/\"CHANGE_THEME\"/\"CREATE_USER\"/\"UNKNOWN\", \"target\": \"...\" }\n" +
+                    "Apps: [" + appsStr + "]\nTheme: " + (currentUser.getTheme() != null ? currentUser.getTheme().getName() : "None") + "\n" +
+                    "For CREATE_USER, 'target' should be the name of the new user.";
 
-        JsonNode resp = aiService.executePrompt(systemMsg, request);
-        if (resp != null && resp.has("action")) {
-            String act = resp.get("action").asText();
-            String trg = resp.get("target").asText();
-            if ("START_APP".equals(act)) {
-                System.out.println("[AI] Starting application: " + trg);
-            } else if ("CHANGE_THEME".equals(act)) {
-                osService.setTheme(currentUser, trg);
-                System.out.println("[AI] Theme changed to: " + trg);
-            } else if ("CREATE_USER".equals(act)) {
-                UserAccount newUser = userService.createUser(trg);
-                System.out.println("[AI] Created new user: " + newUser.getName());
+            JsonNode resp = aiService.executePrompt(systemMsg, request);
+            if (resp != null && resp.has("action")) {
+                String act = resp.get("action").asText();
+                String trg = resp.get("target").asText();
+                if ("START_APP".equals(act)) {
+                    System.out.println("[AI] Starting application: " + trg);
+                } else if ("CHANGE_THEME".equals(act)) {
+                    osService.setTheme(currentUser, trg);
+                    System.out.println("[AI] Theme changed to: " + trg);
+                } else if ("CREATE_USER".equals(act)) {
+                    UserAccount newUser = userService.createUser(trg);
+                    System.out.println("[AI] Created new user: " + newUser.getName());
+                } else {
+                    System.out.println("[AI] I'm sorry, I don't know how to perform this action yet: " + request);
+                }
             } else {
-                System.out.println("[AI] I'm sorry, I don't know how to perform this action yet: " + request);
+                System.out.println("[AI] I couldn't understand that command. Please try something like 'Start Minesweeper' or 'Create user Ivan'.");
             }
-        } else {
-            System.out.println("[AI] I couldn't understand that command. Please try something like 'Start Minesweeper' or 'Create user Ivan'.");
+        } catch (AgileExpertException e) {
+            System.err.println("[AI ERROR] " + e.getMessage());
+        }
+    }
+
+    private void runSimulation() {
+        try {
+            simulationService.runSimulation();
+        } catch (AgileExpertException e) {
+            System.err.println("[SIMULATION ERROR] " + e.getMessage());
         }
     }
 }
