@@ -1,22 +1,32 @@
 package hu.agilexpert.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
+@Getter
+@Setter
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "menu_items")
 public class MenuItem extends BaseEntity {
 
+    @ToString.Include
     private String label;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ToString.Exclude
+    @ManyToOne
     @JoinColumn(name = "app_id")
     private App app;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ToString.Exclude
+    @ManyToOne
     @JoinColumn(name = "submenu_id")
     private Menu subMenu;
 
     public MenuItem() {
+        super();
     }
 
     public MenuItem(String label) {
@@ -34,34 +44,5 @@ public class MenuItem extends BaseEntity {
         super();
         this.label = label;
         this.subMenu = subMenu;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public App getApp() {
-        return app;
-    }
-
-    public void setApp(App app) {
-        this.app = app;
-    }
-
-    public Menu getSubMenu() {
-        return subMenu;
-    }
-
-    public void setSubMenu(Menu subMenu) {
-        this.subMenu = subMenu;
-    }
-
-    @Override
-    public String toString() {
-        return "MenuItem{" + "label='" + label + '\'' + '}';
     }
 }

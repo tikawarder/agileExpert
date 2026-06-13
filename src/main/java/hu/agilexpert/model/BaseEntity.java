@@ -2,9 +2,15 @@ package hu.agilexpert.model;
 
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id")
 @MappedSuperclass
 public abstract class BaseEntity {
 
@@ -16,14 +22,6 @@ public abstract class BaseEntity {
     }
 
     public BaseEntity(String id) {
-        this.id = id;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
         this.id = id;
     }
 }
