@@ -184,21 +184,29 @@ public class ConsoleUi {
         if (currentUser == null) return;
         System.out.println("1. Add application to menu\n2. Add submenu\n0. Back");
         String opt = scanner.nextLine();
-        if (opt.equals("1")) {
-            List<App> apps = osService.getAllApps();
-            for (int i = 0; i < apps.size(); i++) System.out.println((i + 1) + ". " + apps.get(i).getName());
-            try {
-                int num = Integer.parseInt(scanner.nextLine());
-                if (num > 0 && num <= apps.size()) {
-                    System.out.print("Label: ");
-                    osService.addAppToMenu(currentUser, apps.get(num - 1), scanner.nextLine());
-                }
-            } catch (NumberFormatException e) {
-                System.err.println("Invalid input: please enter a number.");
+        switch (opt) {
+            case "1" -> addAppToMenu();
+            case "2" -> {
+                System.out.print("Label: ");
+                osService.addSubMenu(currentUser, scanner.nextLine());
             }
-        } else if (opt.equals("2")) {
-            System.out.print("Label: ");
-            osService.addSubMenu(currentUser, scanner.nextLine());
+        }
+    }
+
+    private void addAppToMenu() {
+        List<App> apps = osService.getAllApps();
+        for (int i = 0; i < apps.size(); i++) {
+            System.out.println((i + 1) + ". " + apps.get(i).getName());
+        }
+        System.out.print("Select app: ");
+        try {
+            int num = Integer.parseInt(scanner.nextLine());
+            if (num > 0 && num <= apps.size()) {
+                System.out.print("Label: ");
+                osService.addAppToMenu(currentUser, apps.get(num - 1), scanner.nextLine());
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid input: please enter a number.");
         }
     }
 

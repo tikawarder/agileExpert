@@ -63,7 +63,7 @@ public class AiService {
                 .modelName(modelName)
                 .temperature(0.3)
                 .build();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             logger.error("Error initializing AI model: {}", e.getMessage());
             return null;
         }
@@ -72,7 +72,7 @@ public class AiService {
     private String loadApiKey() {
         try {
             return Dotenv.load().get("OPENAI_API_KEY");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return System.getenv("OPENAI_API_KEY");
         }
     }
@@ -81,7 +81,7 @@ public class AiService {
         try {
             String name = Dotenv.load().get("OPENAI_MODEL_NAME");
             return (name != null && !name.isBlank()) ? name : "gpt-4o-mini";
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             String name = System.getenv("OPENAI_MODEL_NAME");
             return (name != null && !name.isBlank()) ? name : "gpt-4o-mini";
         }

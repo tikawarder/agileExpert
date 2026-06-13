@@ -69,6 +69,11 @@ mvn compile exec:java
 - `OsService.addSubMenu()` now explicitly calls `em.persist(sub)` since the unsafe cascade no longer handles it.
 - Fixed `PersistenceTest` to explicitly persist the `subMenu` entity before associating it with a `MenuItem`.
 
+### Batch 7 – Reduce nesting depth and narrow exception types
+- `modifyMenu()` refactored: app-selection logic extracted to `addAppToMenu()`, inner `if/for/try` replaced with a `switch` expression.
+- `catch (Exception e)` narrowed to `catch (RuntimeException e)` in `AiService.buildChatModel()`, `loadApiKey()`, and `loadModelName()` — these are deliberate `.env`-to-env-var fallback patterns; checked exceptions cannot occur there.
+- `DbService.inTransaction()` catch remains `Exception` — it must catch everything to guarantee rollback.
+
 ### Batch 6 – Fix SystemIntegrationTest: proper JUnit E2E test
 - Converted `SystemIntegrationTest` from a `main()` method to a proper `@Test` method with JUnit 5 assertions (AssertJ).
 - Added `@Tag("e2e")` to clearly mark it as an end-to-end test, distinct from component integration tests (`PersistenceTest`).
