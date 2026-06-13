@@ -201,7 +201,31 @@ public class ConsoleUi {
     }
 
     private void startApp() {
-        System.out.println("Launching App simulation...");
+        if (currentUser == null) {
+            System.out.println("No user selected.");
+            return;
+        }
+        List<App> apps = currentUser.getInstalledApps();
+        if (apps.isEmpty()) {
+            System.out.println("No apps installed. Use option 9 to install apps first.");
+            return;
+        }
+        System.out.println("Installed apps:");
+        for (int i = 0; i < apps.size(); i++) {
+            System.out.println((i + 1) + ". " + apps.get(i).getName());
+        }
+        System.out.println("0. Back");
+        System.out.print("Select app to launch: ");
+        try {
+            int num = Integer.parseInt(scanner.nextLine());
+            if (num > 0 && num <= apps.size()) {
+                String appName = apps.get(num - 1).getName();
+                System.out.println("[OS] Launching application: " + appName + "...");
+                System.out.println("[OS] " + appName + " is running.");
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid input: please enter a number.");
+        }
     }
 
     private void changeTheme() {

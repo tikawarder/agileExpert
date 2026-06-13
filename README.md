@@ -69,6 +69,11 @@ mvn compile exec:java
 - `OsService.addSubMenu()` now explicitly calls `em.persist(sub)` since the unsafe cascade no longer handles it.
 - Fixed `PersistenceTest` to explicitly persist the `subMenu` entity before associating it with a `MenuItem`.
 
+### Batch 4 – Implement startApp()
+- `startApp()` now lists the current user's installed apps and lets the user select one by number.
+- Selecting an app prints a simulated launch sequence: `[OS] Launching application: <name>...` followed by `[OS] <name> is running.`
+- If no apps are installed, the user is directed to option 9 (Install App) instead of silently doing nothing.
+
 ### Batch 3 – Complete user CRUD (rename and delete)
 - Added `renameUser()` and `deleteUser()` to `UserService` — the task description explicitly required create, modify, and delete for user accounts.
 - `deleteUser()` re-attaches the entity via `em.find()` before calling `em.remove()` to ensure it is managed within the transaction.
