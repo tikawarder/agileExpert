@@ -38,6 +38,7 @@ public class ConsoleUi {
         boolean running = true;
         while (running) {
             printMainMenu();
+            if (!scanner.hasNextLine()) break;
             String input = scanner.nextLine();
             switch (input) {
                 case "1" -> createUser();

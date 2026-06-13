@@ -69,6 +69,13 @@ mvn compile exec:java
 - `OsService.addSubMenu()` now explicitly calls `em.persist(sub)` since the unsafe cascade no longer handles it.
 - Fixed `PersistenceTest` to explicitly persist the `subMenu` entity before associating it with a `MenuItem`.
 
+### Batch 6 – Fix SystemIntegrationTest: proper JUnit E2E test
+- Converted `SystemIntegrationTest` from a `main()` method to a proper `@Test` method with JUnit 5 assertions (AssertJ).
+- Added `@Tag("e2e")` to clearly mark it as an end-to-end test, distinct from component integration tests (`PersistenceTest`).
+- Added a class-level Javadoc comment explaining the difference: E2E tests verify the full console flow via subprocess, integration tests verify service + DB interaction directly.
+- Added `maven-surefire-plugin` configuration to `pom.xml` to exclude `e2e`-tagged tests from the default `mvn test` run. Run E2E tests with: `mvn test -Dgroups=e2e`.
+- Added `scanner.hasNextLine()` guard in `ConsoleUi.start()` to handle stdin EOF gracefully instead of throwing `NoSuchElementException`.
+
 ### Batch 5 – AI integration improvements
 - Added `AiAction` enum (`START_APP`, `CHANGE_THEME`, `CREATE_USER`, `UNKNOWN`) to replace fragile free-text String comparisons.
 - Extracted `COMMAND_SYSTEM_PROMPT` and `SIMULATION_SYSTEM_PROMPT` as `public static final` constants in `AiService` — prompts are now easy to find, modify, and reuse.

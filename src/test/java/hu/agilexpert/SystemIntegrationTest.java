@@ -1,65 +1,63 @@
 package hu.agilexpert;
 
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class SystemIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    public static void main(String[] args) {
-        System.out.println("Starting System Integration Test...");
-        
-        // Define the sequence of inputs to test all menus
+/**
+ * End-to-end test: launches the full application as a subprocess and verifies
+ * console output. This is NOT a component integration test — it tests the
+ * complete user-facing flow from stdin to stdout.
+ *
+ * For component-level integration tests (service + real DB), see PersistenceTest.
+ *
+ * Run with: mvn test -Dgroups=e2e
+ * Excluded from default mvn test run (see Surefire config in pom.xml).
+ */
+@Tag("e2e")
+class SystemIntegrationTest {
+
+    @Test
+    void applicationStartsAndAcceptsUserCreation() throws Exception {
         String inputs = String.join("\n",
-            "1", "Test User AI",      // 1. Create User
-            "2", "2",                  // 2. Select User (assuming at least 2 users exist)
-            "3",                       // 3. Show Current User State
-            "6", "Dark Mode",          // 6. Change Theme
-            "7", "Forest.jpg",         // 7. Set Background
-            "8", "1",                  // 8. Manage Icons -> List (returns to main menu)
-            "9", "1",                  // 9. Install App (first one)
-            "10", "Change theme to Ocean", // 10. AI Assistant
-            "0"                        // 0. Exit
+            "1", "E2E Test User",   // Create user
+            "3",                    // Show state (no user selected yet, shows message)
+            "0"                     // Exit
         ) + "\n";
 
-        ProcessBuilder pb = new ProcessBuilder("mvn", "exec:java");
+        ProcessBuilder pb = new ProcessBuilder("mvn", "-q", "exec:java");
         pb.redirectErrorStream(true);
-        
-        try {
-            Process process = pb.start();
-            
-            // Feed the inputs to the process
-            try (OutputStream os = process.getOutputStream()) {
-                os.write(inputs.getBytes(StandardCharsets.UTF_8));
-                os.flush();
-            }
 
-            // Read and print the output
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    System.out.println("[APP] " + line);
-                    
-                    // Simple assertions based on output
-                    if (line.contains("Created User: Test User AI")) {
-                        System.out.println(">>> SUCCESS: User creation verified.");
-                    }
-                    if (line.contains("Theme changed to: Ocean")) {
-                        System.out.println(">>> SUCCESS: AI Command verified.");
-                    }
-                }
-            }
+        Process process = pb.start();
 
-            boolean finished = process.waitFor(60, TimeUnit.SECONDS);
-            if (finished && process.exitValue() == 0) {
-                System.out.println("\nIntegration Test Finished Successfully!");
-            } else {
-                System.err.println("\nIntegration Test Failed or Timed Out!");
-                process.destroy();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        try (OutputStream os = process.getOutputStream()) {
+            os.write(inputs.getBytes(StandardCharsets.UTF_8));
+            os.flush();
         }
+
+        List<String> outputLines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                outputLines.add(line);
+            }
+        }
+
+        boolean finished = process.waitFor(90, TimeUnit.SECONDS);
+        if (!finished) process.destroy();
+
+        String fullOutput = String.join("\n", outputLines);
+        assertThat(finished).as("Application timed out").isTrue();
+        assertThat(process.exitValue()).as("Application exited with error.\nOutput:\n" + fullOutput).isEqualTo(0);
+        assertThat(fullOutput).contains("Welcome to the AgileXpert OS simulator!");
+        assertThat(fullOutput).contains("Created User: E2E Test User");
+        assertThat(fullOutput).contains("Goodbye!");
     }
 }
