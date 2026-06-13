@@ -58,5 +58,17 @@ mvn compile exec:java
 ```
 
 ---
+
+## Changelog
+
+### Batch 1 – Model layer refactor
+- Added Lombok (`provided` scope) to eliminate getter/setter/toString boilerplate across all entity classes.
+- Added `@EqualsAndHashCode(of = "id")` to `BaseEntity` so entity equality is based on database ID, fixing silent deduplication failures in collections after a DB reload.
+- Added `@ToString.Exclude` on all relationship fields to prevent `LazyInitializationException` and circular reference loops in `toString()`.
+- Removed `CascadeType.ALL` from `@ManyToOne` associations in `MenuItem` — cascading deletes through a many-to-one relation could silently delete shared `App` or `Menu` entities.
+- `OsService.addSubMenu()` now explicitly calls `em.persist(sub)` since the unsafe cascade no longer handles it.
+- Fixed `PersistenceTest` to explicitly persist the `subMenu` entity before associating it with a `MenuItem`.
+
+---
 **Author**: Tamás Biró (tikawarder@gmail.com)
-**Technologies**: Java 17, JPA/Hibernate, H2 Database, LangChain4j, Maven.
+**Technologies**: Java 17, JPA/Hibernate, H2 Database, LangChain4j, Lombok, Maven.

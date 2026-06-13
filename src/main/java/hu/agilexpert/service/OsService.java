@@ -66,6 +66,7 @@ public class OsService {
     public void addSubMenu(UserAccount user, String label) {
         dbService.inTransaction(em -> {
             Menu sub = new Menu(label);
+            em.persist(sub);
             MenuItem item = new MenuItem(label, sub);
             user.getDeviceMenu().getItems().add(item);
             em.merge(user);

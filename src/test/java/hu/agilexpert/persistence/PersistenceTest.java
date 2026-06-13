@@ -68,7 +68,7 @@ class PersistenceTest {
         em.getTransaction().begin();
         em.persist(icon);
         em.persist(app);
-        // MenuItem and Menu are cascaded via UserAccount -> Menu -> MenuItem
+        em.persist(subMenu);
         em.persist(user);
         em.getTransaction().commit();
 
