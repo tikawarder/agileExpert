@@ -42,4 +42,20 @@ public class UserService {
     public void saveUser(UserAccount user) {
         dbService.inTransaction(em -> em.merge(user));
     }
+
+    public void renameUser(UserAccount user, String newName) {
+        dbService.inTransaction(em -> {
+            user.setName(newName);
+            em.merge(user);
+        });
+        logger.info("Renamed user to: {}", newName);
+    }
+
+    public void deleteUser(UserAccount user) {
+        dbService.inTransaction(em -> {
+            UserAccount managed = em.find(UserAccount.class, user.getId());
+            if (managed != null) em.remove(managed);
+        });
+        logger.info("Deleted user: {}", user.getName());
+    }
 }

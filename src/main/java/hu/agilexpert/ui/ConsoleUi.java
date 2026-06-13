@@ -8,7 +8,6 @@ import hu.agilexpert.service.OsService;
 import hu.agilexpert.service.UserService;
 import hu.agilexpert.service.SimulationService;
 import hu.agilexpert.exception.AgileExpertException;
-import jakarta.persistence.EntityManager;
 
 import java.util.List;
 import java.util.Scanner;
@@ -51,6 +50,8 @@ public class ConsoleUi {
                 case "9" -> installApp();
                 case "10" -> executeAiCommand();
                 case "11" -> runSimulation();
+                case "12" -> renameUser();
+                case "13" -> deleteUser();
                 case "0" -> running = false;
                 default -> System.out.println("Invalid option.");
             }
@@ -60,18 +61,20 @@ public class ConsoleUi {
 
     private void printMainMenu() {
         System.out.println("\n--- Main Menu ---");
-        System.out.println("1. Create User");
-        System.out.println("2. Select User");
-        System.out.println("3. Show Current User State");
-        System.out.println("4. Modify Current User's App Menu");
-        System.out.println("5. Start Application");
-        System.out.println("6. Change Theme");
-        System.out.println("7. Set Background Image");
-        System.out.println("8. Manage Icons");
-        System.out.println("9. Install App from Store");
+        System.out.println("1.  Create User");
+        System.out.println("2.  Select User");
+        System.out.println("3.  Show Current User State");
+        System.out.println("4.  Modify Current User's App Menu");
+        System.out.println("5.  Start Application");
+        System.out.println("6.  Change Theme");
+        System.out.println("7.  Set Background Image");
+        System.out.println("8.  Manage Icons");
+        System.out.println("9.  Install App from Store");
         System.out.println("10. AI Assistant (Natural Language Control)");
         System.out.println("11. Run System Simulation (LLM Data Generation)");
-        System.out.println("0. Exit");
+        System.out.println("12. Rename Current User");
+        System.out.println("13. Delete Current User");
+        System.out.println("0.  Exit");
         System.out.print("Choose an option: ");
     }
 
@@ -90,10 +93,10 @@ public class ConsoleUi {
             App app2 = new App("OpenMap", defaultIcon);
             App app3 = new App("Paint", defaultIcon);
             App app4 = new App("Directory", defaultIcon);
-            
+
             Theme defaultTheme = new Theme("Light Theme");
             BackgroundImage defaultBgm = new BackgroundImage("Blue Mountains");
-            
+
             em.persist(defaultIcon);
             em.persist(app1);
             em.persist(app2);
@@ -140,8 +143,8 @@ public class ConsoleUi {
                 currentUser = users.get(num - 1);
                 System.out.println("Selected " + currentUser.getName());
             }
-        } catch (Exception e) {
-            System.err.println("Error selecting user: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid input: please enter a number.");
         }
     }
 
@@ -188,8 +191,8 @@ public class ConsoleUi {
                     System.out.print("Label: ");
                     osService.addAppToMenu(currentUser, apps.get(num - 1), scanner.nextLine());
                 }
-            } catch (Exception e) {
-                System.err.println("Error adding app: " + e.getMessage());
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid input: please enter a number.");
             }
         } else if (opt.equals("2")) {
             System.out.print("Label: ");
@@ -230,16 +233,45 @@ public class ConsoleUi {
         try {
             int num = Integer.parseInt(scanner.nextLine());
             if (num > 0 && num <= apps.size()) osService.installApp(currentUser, apps.get(num - 1));
-        } catch (Exception e) {
-            System.err.println("Error installing app: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid input: please enter a number.");
         }
+    }
+
+    private void renameUser() {
+        if (currentUser == null) {
+            System.out.println("No user selected.");
+            return;
+        }
+        System.out.print("New name for '" + currentUser.getName() + "' (0 to go back): ");
+        String newName = scanner.nextLine();
+        if ("0".equals(newName) || newName.isBlank()) return;
+        userService.renameUser(currentUser, newName);
+        System.out.println("User renamed to: " + currentUser.getName());
+    }
+
+    private void deleteUser() {
+        if (currentUser == null) {
+            System.out.println("No user selected.");
+            return;
+        }
+        System.out.print("Are you sure you want to delete '" + currentUser.getName() + "'? (yes/no): ");
+        String confirm = scanner.nextLine();
+        if (!"yes".equalsIgnoreCase(confirm)) {
+            System.out.println("Cancelled.");
+            return;
+        }
+        String deletedName = currentUser.getName();
+        userService.deleteUser(currentUser);
+        currentUser = null;
+        System.out.println("User '" + deletedName + "' deleted.");
     }
 
     private void executeAiCommand() {
         if (currentUser == null) return;
         System.out.print("Command: ");
         String request = scanner.nextLine();
-        
+
         try {
             StringBuilder appsStr = new StringBuilder();
             currentUser.getInstalledApps().forEach(a -> appsStr.append(a.getName()).append(", "));

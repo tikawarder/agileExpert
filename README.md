@@ -69,6 +69,14 @@ mvn compile exec:java
 - `OsService.addSubMenu()` now explicitly calls `em.persist(sub)` since the unsafe cascade no longer handles it.
 - Fixed `PersistenceTest` to explicitly persist the `subMenu` entity before associating it with a `MenuItem`.
 
+### Batch 3 – Complete user CRUD (rename and delete)
+- Added `renameUser()` and `deleteUser()` to `UserService` — the task description explicitly required create, modify, and delete for user accounts.
+- `deleteUser()` re-attaches the entity via `em.find()` before calling `em.remove()` to ensure it is managed within the transaction.
+- `renameUser()` updates the name in-memory and merges the entity in a single transaction.
+- Added menu options 12 (Rename Current User) and 13 (Delete Current User) to `ConsoleUi`.
+- `deleteUser()` prompts for confirmation and resets `currentUser` to `null` after deletion.
+- Replaced generic `catch (Exception e)` with `catch (NumberFormatException e)` in `selectUser()`, `installApp()`, and `modifyMenu()`.
+
 ### Batch 2 – EntityManager lifecycle fix
 - `DbService` no longer holds a singleton `EntityManager`. The `EntityManagerFactory` remains a singleton, but each operation now opens and closes its own `EntityManager`.
 - `inTransaction()` creates a fresh `EntityManager`, begins a transaction, commits or rolls back on error, and always closes the EM in a `finally` block.
