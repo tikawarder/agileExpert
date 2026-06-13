@@ -69,6 +69,17 @@ mvn compile exec:java
 - `OsService.addSubMenu()` now explicitly calls `em.persist(sub)` since the unsafe cascade no longer handles it.
 - Fixed `PersistenceTest` to explicitly persist the `subMenu` entity before associating it with a `MenuItem`.
 
+### Batch 5 – AI integration improvements
+- Added `AiAction` enum (`START_APP`, `CHANGE_THEME`, `CREATE_USER`, `UNKNOWN`) to replace fragile free-text String comparisons.
+- Extracted `COMMAND_SYSTEM_PROMPT` and `SIMULATION_SYSTEM_PROMPT` as `public static final` constants in `AiService` — prompts are now easy to find, modify, and reuse.
+- `AiService` now uses LangChain4j's `SystemMessage` / `UserMessage` separation instead of string concatenation, giving the model proper role context.
+- Model name is now loaded from `.env` (`OPENAI_MODEL_NAME`), defaulting to `gpt-4o-mini` if not set.
+- JSON response cleanup replaced with a single regex (`replaceAll("(?s)\`\`\`json?\\s*|\`\`\`", "")`) instead of multiple `startsWith` / `endsWith` checks.
+- `catch (Exception e)` replaced with `catch (JsonProcessingException e)` for precise JSON parse error handling.
+- `SimulationService` now receives `AiService` via constructor injection — no duplicate HTTP client instantiation.
+- `ConsoleUi.executeAiCommand()` split into `parseAiAction()` and `handleAiAction()` to reduce nesting depth.
+- `SimulationService.runSimulation()` inner loop extracted into `persistUserFromDto()`.
+
 ### Batch 4 – Implement startApp()
 - `startApp()` now lists the current user's installed apps and lets the user select one by number.
 - Selecting an app prints a simulated launch sequence: `[OS] Launching application: <name>...` followed by `[OS] <name> is running.`

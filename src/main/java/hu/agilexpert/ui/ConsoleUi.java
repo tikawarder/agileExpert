@@ -8,6 +8,7 @@ import hu.agilexpert.service.OsService;
 import hu.agilexpert.service.UserService;
 import hu.agilexpert.service.SimulationService;
 import hu.agilexpert.exception.AgileExpertException;
+import hu.agilexpert.model.AiAction;
 
 import java.util.List;
 import java.util.Scanner;
@@ -24,7 +25,7 @@ public class ConsoleUi {
         this.userService = new UserService();
         this.osService = new OsService();
         this.aiService = new AiService();
-        this.simulationService = new SimulationService();
+        this.simulationService = new SimulationService(aiService);
         this.scanner = new Scanner(System.in);
     }
 
@@ -297,33 +298,45 @@ public class ConsoleUi {
         String request = scanner.nextLine();
 
         try {
-            StringBuilder appsStr = new StringBuilder();
-            currentUser.getInstalledApps().forEach(a -> appsStr.append(a.getName()).append(", "));
-
-            String systemMsg = "You are an OS simulator assistant. Respond STRICTLY in valid JSON with DOUBLE QUOTES: { \"action\": \"START_APP\"/\"CHANGE_THEME\"/\"CREATE_USER\"/\"UNKNOWN\", \"target\": \"...\" }\n" +
-                    "Apps: [" + appsStr + "]\nTheme: " + (currentUser.getTheme() != null ? currentUser.getTheme().getName() : "None") + "\n" +
-                    "For CREATE_USER, 'target' should be the name of the new user.";
+            String appsStr = currentUser.getInstalledApps().stream()
+                .map(App::getName)
+                .reduce("", (a, b) -> a.isEmpty() ? b : a + ", ");
+            String themeName = currentUser.getTheme() != null ? currentUser.getTheme().getName() : "None";
+            String systemMsg = AiService.COMMAND_SYSTEM_PROMPT.formatted(appsStr, themeName);
 
             JsonNode resp = aiService.executePrompt(systemMsg, request);
             if (resp != null && resp.has("action")) {
-                String act = resp.get("action").asText();
-                String trg = resp.get("target").asText();
-                if ("START_APP".equals(act)) {
-                    System.out.println("[AI] Starting application: " + trg);
-                } else if ("CHANGE_THEME".equals(act)) {
-                    osService.setTheme(currentUser, trg);
-                    System.out.println("[AI] Theme changed to: " + trg);
-                } else if ("CREATE_USER".equals(act)) {
-                    UserAccount newUser = userService.createUser(trg);
-                    System.out.println("[AI] Created new user: " + newUser.getName());
-                } else {
-                    System.out.println("[AI] I'm sorry, I don't know how to perform this action yet: " + request);
-                }
+                AiAction action = parseAiAction(resp.get("action").asText());
+                String target = resp.get("target").asText();
+                handleAiAction(action, target, request);
             } else {
                 System.out.println("[AI] I couldn't understand that command. Please try something like 'Start Minesweeper' or 'Create user Ivan'.");
             }
         } catch (AgileExpertException e) {
             System.err.println("[AI ERROR] " + e.getMessage());
+        }
+    }
+
+    private AiAction parseAiAction(String value) {
+        try {
+            return AiAction.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return AiAction.UNKNOWN;
+        }
+    }
+
+    private void handleAiAction(AiAction action, String target, String originalRequest) {
+        switch (action) {
+            case START_APP -> System.out.println("[AI] Starting application: " + target);
+            case CHANGE_THEME -> {
+                osService.setTheme(currentUser, target);
+                System.out.println("[AI] Theme changed to: " + target);
+            }
+            case CREATE_USER -> {
+                UserAccount newUser = userService.createUser(target);
+                System.out.println("[AI] Created new user: " + newUser.getName());
+            }
+            default -> System.out.println("[AI] I don't know how to perform this action yet: " + originalRequest);
         }
     }
 
