@@ -34,11 +34,15 @@ public class OsService {
     }
 
     public List<App> getAllApps() {
-        return dbService.getEm().createQuery("SELECT a FROM App a", App.class).getResultList();
+        return dbService.inQuery(em ->
+            em.createQuery("SELECT a FROM App a", App.class).getResultList()
+        );
     }
 
     public List<Icon> getAllIcons() {
-        return dbService.getEm().createQuery("SELECT i FROM Icon i", Icon.class).getResultList();
+        return dbService.inQuery(em ->
+            em.createQuery("SELECT i FROM Icon i", Icon.class).getResultList()
+        );
     }
 
     public void addIcon(String name) {
@@ -48,8 +52,10 @@ public class OsService {
     public void installApp(UserAccount user, App app) {
         if (!user.getInstalledApps().contains(app)) {
             dbService.inTransaction(em -> {
+                UserAccount managed = em.find(UserAccount.class, user.getId());
+                App managedApp = em.find(App.class, app.getId());
+                managed.getInstalledApps().add(managedApp);
                 user.getInstalledApps().add(app);
-                em.merge(user);
             });
             logger.info("App '{}' installed for user '{}'", app.getName(), user.getName());
         }
@@ -57,9 +63,11 @@ public class OsService {
 
     public void addAppToMenu(UserAccount user, App app, String label) {
         dbService.inTransaction(em -> {
-            MenuItem item = new MenuItem(label, app);
+            App managedApp = em.find(App.class, app.getId());
+            MenuItem item = new MenuItem(label, managedApp);
+            UserAccount managed = em.find(UserAccount.class, user.getId());
+            managed.getDeviceMenu().getItems().add(item);
             user.getDeviceMenu().getItems().add(item);
-            em.merge(user);
         });
     }
 
@@ -68,8 +76,9 @@ public class OsService {
             Menu sub = new Menu(label);
             em.persist(sub);
             MenuItem item = new MenuItem(label, sub);
+            UserAccount managed = em.find(UserAccount.class, user.getId());
+            managed.getDeviceMenu().getItems().add(item);
             user.getDeviceMenu().getItems().add(item);
-            em.merge(user);
         });
     }
 }

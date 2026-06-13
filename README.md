@@ -69,6 +69,13 @@ mvn compile exec:java
 - `OsService.addSubMenu()` now explicitly calls `em.persist(sub)` since the unsafe cascade no longer handles it.
 - Fixed `PersistenceTest` to explicitly persist the `subMenu` entity before associating it with a `MenuItem`.
 
+### Batch 2 – EntityManager lifecycle fix
+- `DbService` no longer holds a singleton `EntityManager`. The `EntityManagerFactory` remains a singleton, but each operation now opens and closes its own `EntityManager`.
+- `inTransaction()` creates a fresh `EntityManager`, begins a transaction, commits or rolls back on error, and always closes the EM in a `finally` block.
+- New `inQuery()` helper method for read-only operations that do not require a transaction.
+- All `dbService.getEm().createQuery(...)` calls in `OsService` and `UserService` replaced with `dbService.inQuery(...)`.
+- `installApp()` and `addAppToMenu()` now re-attach entities via `em.find()` within the transaction instead of relying on a shared persistent context.
+
 ---
 **Author**: Tamás Biró (tikawarder@gmail.com)
 **Technologies**: Java 17, JPA/Hibernate, H2 Database, LangChain4j, Lombok, Maven.

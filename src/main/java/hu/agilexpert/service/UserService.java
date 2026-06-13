@@ -18,23 +18,24 @@ public class UserService {
         UserAccount newUser = new UserAccount(name);
         Menu menu = new Menu(name + "'s Root Menu");
         newUser.setDeviceMenu(menu);
-        
+
         dbService.inTransaction(em -> em.persist(newUser));
         logger.info("Created new user: {}", name);
         return newUser;
     }
 
     public List<UserAccount> getAllUsers() {
-        return dbService.getEm()
-                .createQuery("SELECT u FROM UserAccount u", UserAccount.class)
-                .getResultList();
+        return dbService.inQuery(em ->
+            em.createQuery("SELECT u FROM UserAccount u", UserAccount.class).getResultList()
+        );
     }
 
     public UserAccount findUserByName(String name) {
-        List<UserAccount> results = dbService.getEm()
-                .createQuery("SELECT u FROM UserAccount u WHERE u.name = :name", UserAccount.class)
-                .setParameter("name", name)
-                .getResultList();
+        List<UserAccount> results = dbService.inQuery(em ->
+            em.createQuery("SELECT u FROM UserAccount u WHERE u.name = :name", UserAccount.class)
+              .setParameter("name", name)
+              .getResultList()
+        );
         return results.isEmpty() ? null : results.get(0);
     }
 
